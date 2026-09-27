@@ -160,11 +160,19 @@ let soundEnabled=true;
 let audioCtx=null;
 
 const $=id=>document.getElementById(id);
-function beepAttention(){
-  if(!soundEnabled) return;
+function unlockAudio(){
   try{
     if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
     if(audioCtx.state==="suspended") audioCtx.resume();
+  }catch(e){}
+}
+["click","keydown","touchstart"].forEach(evt=>document.addEventListener(evt,unlockAudio,{once:true}));
+
+function beepAttention(){
+  if(!soundEnabled) return;
+  try{
+    if(!audioCtx || audioCtx.state==="suspended") unlockAudio();
+    if(!audioCtx || audioCtx.state!=="running") return;
     const now=audioCtx.currentTime;
     [0,0.22].forEach(offset=>{
       const osc=audioCtx.createOscillator();
