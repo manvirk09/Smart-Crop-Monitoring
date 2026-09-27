@@ -408,6 +408,7 @@ async function disconnectSensor(){
 
 function changeCrop(){
   crop=$("cropSelect").value;
+  wasNeedsAttention=false;
   $("cropArt").style.animation="none";void $("cropArt").offsetWidth;$("cropArt").style.animation="float 2.8s ease-in-out infinite";
   if(!liveConnected){
     const c=CROPS[crop];values.moisture=c.mMin;values.ph=+((c.ph[0]+c.ph[1])/2).toFixed(1);values.temp=Math.round((c.t[0]+c.t[1])/2);values.humidity=Math.round((c.h[0]+c.h[1])/2);values.light=Math.round((c.l[0]+c.l[1])/2);lastPacket={};render();toast("Switched to "+crop+" 🌱");
