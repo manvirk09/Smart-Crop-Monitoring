@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Smart Crop Monitoring • Wokwi Sensor Dashboard</title>
+<title>AgriSense — Smart Crop Monitoring & Intelligence System</title>
 <style>
 :root{
   --bg:#07110d;--danger:#ff7272;--panel:rgba(18,35,27,.78);--panel2:rgba(23,45,34,.9);
@@ -42,9 +42,10 @@ header{display:flex;justify-content:space-between;gap:18px;align-items:center;ma
 <body>
 <div class="wrap">
 <header>
-  <div class="brand"><h1>🌱 Smart Crop Monitoring</h1><p>Arduino Uno Based Smart Agriculture Dashboard</p></div>
+  <div class="brand"><h1>🌱 AgriSense</h1><p>Smart Crop Monitoring &amp; Intelligence System</p></div>
   <div class="actions">
     <button class="btn" id="liveBtn">🔌 Connect Sensor</button>
+    <button class="btn" id="soundBtn">🔔 Alerts On</button>
     <button class="btn" id="themeBtn">☀️ Light</button>
     <button class="btn" id="resetBtn">↺ Reset</button>
   </div>
@@ -134,7 +135,7 @@ header{display:flex;justify-content:space-between;gap:18px;align-items:center;ma
   <div class="small analytics-note">This is a dashboard suitability indicator based on the crop thresholds in the prototype; it is not a biological yield prediction.</div>
 </section>
 </div>
-<footer>Smart Crop Monitoring • Prototype / Demo Mode</footer>
+<footer>AgriSense — Smart Crop Monitoring &amp; Intelligence System • Prototype / Demo Mode</footer>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -154,8 +155,30 @@ let liveConnected=false;
 let connectionType="none";
 let values={moisture:50,ph:6.5,temp:25,humidity:60,light:500};
 let lastPacket={};
+let wasNeedsAttention=false;
+let soundEnabled=true;
+let audioCtx=null;
 
 const $=id=>document.getElementById(id);
+function beepAttention(){
+  if(!soundEnabled) return;
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended") audioCtx.resume();
+    const now=audioCtx.currentTime;
+    [0,0.22].forEach(offset=>{
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.type="square";
+      osc.frequency.setValueAtTime(880,now+offset);
+      gain.gain.setValueAtTime(0.0001,now+offset);
+      gain.gain.exponentialRampToValueAtTime(0.22,now+offset+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001,now+offset+0.18);
+      osc.connect(gain);gain.connect(audioCtx.destination);
+      osc.start(now+offset);osc.stop(now+offset+0.2);
+    });
+  }catch(e){}
+}
 function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>$("toast").classList.remove("show"),2200)}
 function markUpdated(){ $("lastUpdated").textContent="Updated "+new Date().toLocaleTimeString(); }
 function rand(a,b){return a+Math.random()*(b-a)}
@@ -249,6 +272,8 @@ function render(){
   const packetWarning=liveConnected && lastPacket.status==="WARNING";
   const needsAttention=packetWarning || problems.length>0;
   const cs=$("cropStatus");cs.textContent=needsAttention?"⚠ NEEDS ATTENTION":"✓ OPTIMAL";cs.className="badge "+(needsAttention?"warn":"");
+  if(needsAttention && !wasNeedsAttention) beepAttention();
+  wasNeedsAttention=needsAttention;
   let alerts=problems.length?problems.map(([k,s])=>`<div class="alert">⚠ ${label(k)} is <b>${s}</b> for ${crop}.</div>`).join(""):'<div class="alert ok">✓ All monitored conditions are within the target ranges.</div>';
   if(pump) alerts+=`<div class="alert">💧 Soil moisture is below ${c.mMin}%. Irrigation should be ON.</div>`;
   if(liveConnected && relay!==pump) alerts+=`<div class="alert">ℹ Relay state reported by Arduino: ${relay?"ON":"OFF"}.</div>`;
@@ -395,6 +420,16 @@ $("disconnectBtn").addEventListener("click",disconnectSensor);
 $("randomBtn").addEventListener("click",()=>{if(liveConnected)toast("Live sensor data is active");else{reading();toast("New demo reading generated")}});
 $("resetBtn").addEventListener("click",resetDashboard);
 $("themeBtn").addEventListener("click",()=>{document.body.classList.toggle("light");$("themeBtn").textContent=document.body.classList.contains("light")?"🌙 Dark":"☀️ Light";toast("Theme changed")});
+$("soundBtn").addEventListener("click",()=>{
+  soundEnabled=!soundEnabled;
+  $("soundBtn").textContent=soundEnabled?"🔔 Alerts On":"🔕 Alerts Off";
+  if(soundEnabled){
+    try{if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();}catch(e){}
+    toast("Attention beep enabled");
+  } else {
+    toast("Attention beep muted");
+  }
+});
 
 $("cropSelect").value="Tomato";
 render();
