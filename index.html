@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Crop Monitoring • Wokwi Sensor Dashboard</title>
+<style>
+:root{
+  --bg:#07110d;--danger:#ff7272;--panel:rgba(18,35,27,.78);--panel2:rgba(23,45,34,.9);
+  --text:#ecfff2;--muted:#a9c4b1;--green:#55e38a;--green2:#9affb8;
+  --line:rgba(130,255,170,.16);--danger:#ff7272;--warn:#ffd166;--shadow:0 20px 60px rgba(0,0,0,.35)
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);
+background:radial-gradient(circle at 20% 0%,#153d28 0,#07110d 38%,#040906 100%);min-height:100vh}
+body.light{--bg:#edf8f0;--panel:rgba(255,255,255,.8);--panel2:#fff;--text:#17301f;--muted:#55705d;--line:rgba(25,110,55,.15);background:linear-gradient(135deg,#edf8f0,#dff2e5)}
+button,select{font:inherit} button{cursor:pointer}
+.wrap{max-width:1200px;margin:auto;padding:28px}
+header{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:22px}
+.brand h1{margin:0;font-size:clamp(25px,4vw,42px)} .brand p{margin:6px 0;color:var(--muted)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:11px 15px;border-radius:14px;backdrop-filter:blur(12px);transition:.2s}
+.btn:hover{transform:translateY(-2px);border-color:var(--green)}.btn.primary{background:rgba(65,190,105,.18);color:var(--green2)}
+.grid{display:grid;grid-template-columns:1.1fr 1.9fr;gap:18px}.card{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:var(--shadow);backdrop-filter:blur(18px)}
+.crop-card{text-align:center;min-height:430px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.crop-art{font-size:145px;line-height:1;filter:drop-shadow(0 18px 22px rgba(0,0,0,.3));animation:float 2.8s ease-in-out infinite;user-select:none}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-14px) rotate(2deg)}}
+.crop-name{font-size:32px;font-weight:800;margin:14px 0 4px}.crop-sub{color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;margin-top:15px;font-weight:700;font-size:13px;background:rgba(85,227,138,.12);color:var(--green2);border:1px solid var(--line)}
+.badge.warn{background:rgba(255,209,102,.1);color:var(--warn)}.badge.bad{background:rgba(255,114,114,.1);color:var(--danger)}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.metric{padding:17px;border:1px solid var(--line);border-radius:18px;background:rgba(0,0,0,.12)}
+.metric .label{color:var(--muted);font-size:13px}.metric .value{font-size:27px;font-weight:800;margin:7px 0}.status{font-size:12px;font-weight:800}.ok{color:var(--green)}.warning{color:var(--warn)}.badtext{color:var(--danger)}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}.select{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:12px 14px;border-radius:14px;min-width:190px}
+.section-title{margin:0 0 14px;font-size:18px}.wide{grid-column:1/-1}.progress{height:9px;background:rgba(255,255,255,.08);border-radius:20px;overflow:hidden}.bar{height:100%;background:linear-gradient(90deg,var(--green),var(--green2));width:0;transition:.4s}
+.alerts{display:grid;gap:9px}.alert{padding:12px 14px;border-radius:14px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.18);color:var(--warn)}.alert.ok{background:rgba(85,227,138,.07);border-color:var(--line)}
+.thresholds{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.threshold{display:flex;justify-content:space-between;padding:11px 12px;border-bottom:1px solid var(--line);color:var(--muted)}.threshold b{color:var(--text)}
+.analytics-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.analytics-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:22px;margin-top:20px}.analytics-label{font-size:11px;letter-spacing:.12em;font-weight:800;margin-bottom:12px}.factor-chart{display:grid;gap:13px}.factor-row{display:grid;grid-template-columns:105px 1fr 44px;gap:10px;align-items:center}.factor-name{font-size:12px;color:var(--text)}.factor-track{height:11px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;border:1px solid var(--line)}.factor-fill{height:100%;border-radius:999px;transition:width .45s ease,background .3s}.factor-score{font-size:11px;text-align:right;font-weight:800}.health-panel{min-height:225px;border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;align-items:center;gap:20px;background:rgba(0,0,0,.1)}.health-ring{width:140px;height:140px;flex:0 0 140px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) 0deg,var(--green) 0deg,rgba(255,255,255,.08) 0deg);position:relative;font-size:37px;font-weight:900}.health-ring:after{content:"";position:absolute;inset:11px;border-radius:50%;background:var(--panel2);border:1px solid var(--line)}.health-ring span,.health-ring small{position:relative;z-index:1}.health-ring small{font-size:14px;margin-left:-3px}.health-copy h3{margin:0 0 7px;font-size:22px}.health-copy p{margin:0;color:var(--muted);line-height:1.55;font-size:12px}.legend{display:flex;flex-wrap:wrap;gap:9px 14px;margin-top:15px;color:var(--muted);font-size:10px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}.dot.good{background:var(--green)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--danger)}.analytics-note{margin-top:14px}.small{font-size:12px;color:var(--muted)}footer{text-align:center;color:var(--muted);padding:25px}
+.toast{position:fixed;right:22px;bottom:22px;background:#12251a;color:var(--text);border:1px solid var(--line);padding:14px 17px;border-radius:15px;box-shadow:var(--shadow);transform:translateY(130px);transition:.3s;z-index:9}.toast.show{transform:translateY(0)}
+@media(max-width:850px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.analytics-grid{grid-template-columns:1fr}}@media(max-width:520px){.metrics,.thresholds{grid-template-columns:1fr}.wrap{padding:15px}.crop-art{font-size:110px}.analytics-head{flex-direction:column}.health-panel{flex-direction:column;text-align:center}.legend{justify-content:center}.factor-row{grid-template-columns:90px 1fr 40px}}
+
+.live-card{display:flex;justify-content:space-between;align-items:center;gap:20px}.live-actions{display:flex;gap:12px;align-items:center;justify-content:flex-end}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand"><h1>🌱 Smart Crop Monitoring</h1><p>Arduino Uno Based Smart Agriculture Dashboard</p></div>
+  <div class="actions">
+    <button class="btn" id="liveBtn">🔌 Connect Sensor</button>
+    <button class="btn" id="themeBtn">☀️ Light</button>
+    <button class="btn" id="resetBtn">↺ Reset</button>
+  </div>
+</header>
+
+<div class="card controls">
+  <strong>Select Crop</strong>
+  <select class="select" id="cropSelect"></select>
+  <span class="badge" id="modeBadge">● DEMO DATA</span>
+  <button class="btn" id="randomBtn">🎲 Test Reading</button>
+</div>
+
+<div class="grid">
+<section class="card crop-card">
+  <div class="crop-art" id="cropArt">🍅</div>
+  <div class="crop-name" id="cropName">Tomato</div>
+  <div class="crop-sub" id="cropType">Vegetable crop</div>
+  <div><span class="badge" id="cropStatus">✓ OPTIMAL</span></div>
+</section>
+
+<section class="card">
+  <h2 class="section-title">Live Sensor Readings</h2>
+  <div class="metrics">
+    <div class="metric"><div class="label">💧 Soil Moisture</div><div class="value" id="moisture">42%</div><div class="status ok" id="moistureStatus">NORMAL</div></div>
+    <div class="metric"><div class="label">🧪 Soil pH</div><div class="value" id="ph">6.4</div><div class="status ok" id="phStatus">NORMAL</div></div>
+    <div class="metric"><div class="label">🌡 Temperature</div><div class="value" id="temp">27°C</div><div class="status ok" id="tempStatus">NORMAL</div></div>
+    <div class="metric"><div class="label">💨 Humidity</div><div class="value" id="humidity">65%</div><div class="status ok" id="humidityStatus">NORMAL</div></div>
+    <div class="metric"><div class="label">☀️ Light</div><div class="value" id="light">650 lux</div><div class="status ok" id="lightStatus">NORMAL</div></div>
+    <div class="metric"><div class="label">🚰 Irrigation</div><div class="value" id="pump">OFF</div><div class="status ok" id="pumpStatus">NOT REQUIRED</div></div>
+    <div class="metric"><div class="label">⚡ Relay</div><div class="value" id="relay">OFF</div><div class="status ok" id="relayStatus">INACTIVE</div></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2 class="section-title">Crop Thresholds</h2>
+  <div class="thresholds" id="thresholds"></div>
+</section>
+
+<section class="card">
+  <h2 class="section-title">⚠️ Alerts & Decisions</h2>
+  <div class="alerts" id="alerts"></div>
+  <div style="margin-top:15px"><div class="small">Soil moisture level</div><div class="progress"><div class="bar" id="moistureBar"></div></div></div>
+</section>
+
+<section class="card wide live-card" id="liveInfo">
+  <div>
+    <div class="section-title">🔌 Sensor Connection</div>
+    <div class="small">The dashboard tries the Wokwi bridge first. If it is unavailable, you can connect a physical Arduino through Web Serial.</div>
+  </div>
+  <div class="live-actions">
+    <span class="small" id="serialHelp">Wokwi bridge is checked automatically. Crop selection is sent to the Arduino when SENSOR DATA is active.</span>
+    <span class="small" id="lastUpdated">Waiting for sensor data</span>
+    <span class="badge" id="syncBadge">↔ CROP SYNC READY</span>
+    <button class="btn" id="disconnectBtn" disabled>Disconnect</button>
+  </div>
+</section>
+
+<section class="card wide">
+  <div class="analytics-head">
+    <div>
+      <h2 class="section-title">📊 Crop Growth & Environment</h2>
+      <div class="small">How the current temperature, moisture, humidity, pH and light conditions fit the selected crop.</div>
+    </div>
+    <div class="badge" id="healthBadge">◎ CALCULATING</div>
+  </div>
+  <div class="analytics-grid">
+    <div>
+      <div class="small analytics-label">FACTOR SUITABILITY</div>
+      <div class="factor-chart" id="factorChart"></div>
+    </div>
+    <div>
+      <div class="small analytics-label">OVERALL CROP HEALTH INDICATOR</div>
+      <div class="health-panel">
+        <div class="health-ring" id="healthRing"><span id="healthScore">--</span><small>%</small></div>
+        <div class="health-copy">
+          <h3 id="healthTitle">--</h3>
+          <p id="healthText">--</p>
+          <div class="legend">
+            <span><i class="dot good"></i>In target</span>
+            <span><i class="dot warn"></i>Near limit</span>
+            <span><i class="dot bad"></i>Outside target</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="small analytics-note">This is a dashboard suitability indicator based on the crop thresholds in the prototype; it is not a biological yield prediction.</div>
+</section>
+</div>
+<footer>Smart Crop Monitoring • Prototype / Demo Mode</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CROPS={"Wheat":{"emoji":"🌾","type":"Cereal crop","ph":[6.0,7.5],"mMin":35,"t":[15,25],"h":[40,70],"l":[300,800]},"Rice":{"emoji":"🌾","type":"Cereal crop","ph":[5.5,7.0],"mMin":50,"t":[20,35],"h":[60,90],"l":[500,1000]},"Maize":{"emoji":"🌽","type":"Cereal crop","ph":[5.8,7.0],"mMin":40,"t":[18,30],"h":[50,80],"l":[400,900]},"Barley":{"emoji":"🌾","type":"Cereal crop","ph":[6.0,7.5],"mMin":35,"t":[12,25],"h":[40,70],"l":[300,800]},"Sorghum":{"emoji":"🌾","type":"Cereal crop","ph":[5.5,7.5],"mMin":35,"t":[20,32],"h":[40,70],"l":[400,900]},"Pearl Millet":{"emoji":"🌾","type":"Cereal crop","ph":[5.5,7.5],"mMin":30,"t":[22,35],"h":[40,70],"l":[400,900]},"Chickpea":{"emoji":"🫘","type":"Pulse crop","ph":[6.0,8.0],"mMin":30,"t":[15,30],"h":[40,70],"l":[300,800]},"Lentil":{"emoji":"🫘","type":"Pulse crop","ph":[6.0,7.5],"mMin":30,"t":[15,25],"h":[40,70],"l":[300,800]},"Pea":{"emoji":"🫛","type":"Pulse crop","ph":[6.0,7.5],"mMin":40,"t":[12,24],"h":[50,80],"l":[300,700]},"Soybean":{"emoji":"🫘","type":"Oilseed crop","ph":[6.0,7.0],"mMin":40,"t":[20,30],"h":[50,80],"l":[400,900]},"Groundnut":{"emoji":"🥜","type":"Oilseed crop","ph":[6.0,7.5],"mMin":35,"t":[22,30],"h":[45,75],"l":[400,900]},"Mustard":{"emoji":"🌼","type":"Oilseed crop","ph":[6.0,7.5],"mMin":30,"t":[10,25],"h":[40,70],"l":[300,800]},"Tomato":{"emoji":"🍅","type":"Vegetable crop","ph":[5.5,7.0],"mMin":40,"t":[18,30],"h":[50,80],"l":[500,1000]},"Potato":{"emoji":"🥔","type":"Vegetable crop","ph":[5.0,6.5],"mMin":45,"t":[15,25],"h":[50,80],"l":[300,700]},"Onion":{"emoji":"🧅","type":"Vegetable crop","ph":[6.0,7.0],"mMin":35,"t":[13,25],"h":[40,70],"l":[400,900]},"Cabbage":{"emoji":"🥬","type":"Vegetable crop","ph":[6.0,7.5],"mMin":45,"t":[15,25],"h":[50,80],"l":[300,800]},"Cauliflower":{"emoji":"🥦","type":"Vegetable crop","ph":[6.0,7.5],"mMin":45,"t":[15,25],"h":[50,80],"l":[300,800]},"Carrot":{"emoji":"🥕","type":"Vegetable crop","ph":[6.0,7.0],"mMin":40,"t":[15,25],"h":[50,80],"l":[300,800]},"Cucumber":{"emoji":"🥒","type":"Vegetable crop","ph":[6.0,6.5],"mMin":50,"t":[20,30],"h":[60,85],"l":[500,1000]},"Spinach":{"emoji":"🥬","type":"Vegetable crop","ph":[6.0,7.5],"mMin":45,"t":[15,25],"h":[50,80],"l":[300,800]},"Okra":{"emoji":"🌱","type":"Vegetable crop","ph":[6.0,7.5],"mMin":40,"t":[22,32],"h":[50,80],"l":[500,1000]},"Brinjal":{"emoji":"🍆","type":"Vegetable crop","ph":[5.5,6.8],"mMin":40,"t":[22,30],"h":[50,80],"l":[500,1000]},"Chilli":{"emoji":"🌶️","type":"Vegetable crop","ph":[5.5,7.0],"mMin":40,"t":[20,30],"h":[50,80],"l":[400,900]},"Beans":{"emoji":"🫘","type":"Vegetable crop","ph":[6.0,7.0],"mMin":45,"t":[18,28],"h":[50,80],"l":[400,900]},"Mango":{"emoji":"🥭","type":"Fruit crop","ph":[5.5,7.5],"mMin":35,"t":[24,35],"h":[50,80],"l":[500,1000]},"Banana":{"emoji":"🍌","type":"Fruit crop","ph":[5.5,7.0],"mMin":55,"t":[20,35],"h":[60,90],"l":[500,1000]},"Apple":{"emoji":"🍎","type":"Fruit crop","ph":[5.5,7.0],"mMin":40,"t":[15,25],"h":[40,70],"l":[300,800]},"Orange":{"emoji":"🍊","type":"Fruit crop","ph":[5.5,7.5],"mMin":40,"t":[18,30],"h":[50,80],"l":[500,1000]},"Guava":{"emoji":"🍈","type":"Fruit crop","ph":[5.0,7.5],"mMin":40,"t":[20,30],"h":[50,80],"l":[500,1000]},"Papaya":{"emoji":"🧡","type":"Fruit crop","ph":[6.0,7.0],"mMin":45,"t":[22,32],"h":[60,85],"l":[500,1000]},"Watermelon":{"emoji":"🍉","type":"Fruit crop","ph":[5.5,7.0],"mMin":45,"t":[21,32],"h":[50,80],"l":[500,1000]},"Strawberry":{"emoji":"🍓","type":"Fruit crop","ph":[5.5,6.5],"mMin":45,"t":[15,25],"h":[50,80],"l":[300,700]},"Grapes":{"emoji":"🍇","type":"Fruit crop","ph":[5.5,7.0],"mMin":40,"t":[18,30],"h":[50,75],"l":[400,900]}};
+
+const BRIDGE_URL="ws://127.0.0.1:8787";
+let crop="Tomato";
+let running=true;
+let timer=null;
+let bridgeRetryTimer=null;
+let ws=null;
+let serialPort=null;
+let serialReader=null;
+let serialBuffer="";
+let liveConnected=false;
+let connectionType="none";
+let values={moisture:50,ph:6.5,temp:25,humidity:60,light:500};
+let lastPacket={};
+
+const $=id=>document.getElementById(id);
+function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>$("toast").classList.remove("show"),2200)}
+function markUpdated(){ $("lastUpdated").textContent="Updated "+new Date().toLocaleTimeString(); }
+function rand(a,b){return a+Math.random()*(b-a)}
+function state(v,range){return v<range[0]?"LOW":v>range[1]?"HIGH":"NORMAL"}
+function stateMin(v,min){return v<min?"LOW":"NORMAL"}
+function label(k){return({moisture:"Soil moisture",ph:"Soil pH",temp:"Temperature",humidity:"Humidity",light:"Light"})[k]}
+function suitability(v,range,isMin=false){
+  if(isMin){ if(v>=range) return 100; return Math.max(0,100-((range-v)/Math.max(1,range))*100); }
+  if(v>=range[0] && v<=range[1]) return 100;
+  const span=Math.max(.1,range[1]-range[0]);
+  if(v<range[0]) return Math.max(0,100-((range[0]-v)/span)*100);
+  return Math.max(0,100-((v-range[1])/span)*100);
+}
+function factorColor(score){return score>=85?"var(--green)":score>=60?"var(--warn)":"var(--danger)"}
+
+function reading(){
+  const c=CROPS[crop];
+  values.moisture=Math.round(rand(Math.max(5,c.mMin-18),Math.min(95,c.mMin+22)));
+  values.ph=+rand(Math.max(3,c.ph[0]-.9),Math.min(10,c.ph[1]+.9)).toFixed(1);
+  values.temp=Math.round(rand(c.t[0]-7,c.t[1]+7));
+  values.humidity=Math.round(rand(Math.max(15,c.h[0]-18),Math.min(98,c.h[1]+18)));
+  values.light=Math.round(rand(Math.max(50,c.l[0]-.45*(c.l[1]-c.l[0])),c.l[1]+.45*(c.l[1]-c.l[0])));
+  lastPacket={pump:values.moisture<c.mMin,relay:values.moisture<c.mMin,status:"DEMO"};
+  render();
+}
+
+function startDemo(){
+  if(liveConnected) return;
+  running=true;
+  clearInterval(timer);
+  timer=setInterval(reading,3000);
+  reading();
+}
+function stopDemo(){clearInterval(timer);timer=null;running=false}
+
+function setModeSensor(type){
+  liveConnected=true;
+  connectionType=type;
+  stopDemo();
+  $("modeBadge").textContent="● SENSOR DATA";
+  $("modeBadge").className="badge";
+  $("liveBtn").textContent=type==="wokwi"?"🟢 Wokwi Connected":"🟢 Sensor Connected";
+  $("disconnectBtn").disabled=false;
+  $("serialHelp").textContent=type==="wokwi"?"Live Wokwi sensor data is connected. Crop selection is synchronized automatically.":"Live Arduino sensor data is connected at 9600 baud. Crop selection is synchronized automatically.";
+}
+
+function setModeDemo(message="No live sensor connection. The dashboard is using simulated readings."){
+  liveConnected=false;
+  connectionType="none";
+  $("modeBadge").textContent="● DEMO DATA";
+  $("modeBadge").className="badge";
+  $("liveBtn").textContent="🔌 Connect Sensor";
+  $("liveBtn").disabled=false;
+  $("disconnectBtn").disabled=true;
+  $("serialHelp").textContent=message;
+  startDemo();
+}
+
+function updateAnalytics(c){
+  const factors=[
+    ["Moisture",suitability(values.moisture,c.mMin,true),values.moisture+"%"],
+    ["pH",suitability(values.ph,c.ph),values.ph.toFixed(1)],
+    ["Temperature",suitability(values.temp,c.t),values.temp+"°C"],
+    ["Humidity",suitability(values.humidity,c.h),values.humidity+"%"],
+    ["Light",suitability(values.light,c.l),values.light+" lux"]
+  ];
+  const avg=Math.round(factors.reduce((sum,f)=>sum+f[1],0)/factors.length);
+  $("factorChart").innerHTML=factors.map(([name,score,current])=>`<div class="factor-row"><div class="factor-name">${name}<div class="small">${current}</div></div><div class="factor-track"><div class="factor-fill" style="width:${score}%;background:${factorColor(score)}"></div></div><div class="factor-score">${Math.round(score)}%</div></div>`).join("");
+  const degrees=Math.round(avg*3.6);
+  $("healthRing").style.background=`conic-gradient(${factorColor(avg)} 0deg,${factorColor(avg)} ${degrees}deg,rgba(255,255,255,.08) ${degrees}deg)`;
+  $("healthScore").textContent=avg;
+  let title="Needs attention",text="One or more environmental factors are outside the preferred range.",badge="⚠ NEEDS ATTENTION",badgeClass="warn";
+  if(avg>=85){title="Healthy conditions";text=`The current environment is well aligned with ${crop}'s target ranges.`;badge="✓ GOOD CONDITIONS";badgeClass=""}
+  else if(avg>=60){title="Watch the environment";text=`Conditions are usable, but one or more factors are getting close to a crop limit.`;badge="◐ WATCH CONDITIONS";badgeClass="warn"}
+  $("healthTitle").textContent=title;$("healthText").textContent=text;$("healthBadge").textContent=badge;$("healthBadge").className="badge "+badgeClass;
+}
+
+function render(){
+  const c=CROPS[crop];
+  $("cropArt").textContent=c.emoji;$("cropName").textContent=crop;$("cropType").textContent=c.type;
+  $("moisture").textContent=Math.round(values.moisture)+"%";$("ph").textContent=Number(values.ph).toFixed(1);$("temp").textContent=Number(values.temp).toFixed(1)+"°C";$("humidity").textContent=Number(values.humidity).toFixed(1)+"%";$("light").textContent=Math.round(values.light)+" lux";
+  const states={moisture:stateMin(values.moisture,c.mMin),ph:state(values.ph,c.ph),temp:state(values.temp,c.t),humidity:state(values.humidity,c.h),light:state(values.light,c.l)};
+  for(const [k,s] of Object.entries(states)){const el=$(k+"Status");el.textContent=s;el.className="status "+(s==="NORMAL"?"ok":"warning")}
+  const pump=liveConnected && typeof lastPacket.pump==="boolean"?lastPacket.pump:values.moisture<c.mMin;
+  const relay=liveConnected && typeof lastPacket.relay==="boolean"?lastPacket.relay:pump;
+  $("pump").textContent=pump?"ON":"OFF";$("pumpStatus").textContent=pump?"IRRIGATION ACTIVE":"NOT REQUIRED";$("pumpStatus").className="status "+(pump?"warning":"ok");
+  $("relay").textContent=relay?"ON":"OFF";
+  $("relayStatus").textContent=relay?"ACTIVE":"INACTIVE";
+  $("relayStatus").className="status "+(relay?"warning":"ok");
+  const problems=Object.entries(states).filter(([,s])=>s!=="NORMAL");
+  const packetWarning=liveConnected && lastPacket.status==="WARNING";
+  const needsAttention=packetWarning || problems.length>0;
+  const cs=$("cropStatus");cs.textContent=needsAttention?"⚠ NEEDS ATTENTION":"✓ OPTIMAL";cs.className="badge "+(needsAttention?"warn":"");
+  let alerts=problems.length?problems.map(([k,s])=>`<div class="alert">⚠ ${label(k)} is <b>${s}</b> for ${crop}.</div>`).join(""):'<div class="alert ok">✓ All monitored conditions are within the target ranges.</div>';
+  if(pump) alerts+=`<div class="alert">💧 Soil moisture is below ${c.mMin}%. Irrigation should be ON.</div>`;
+  if(liveConnected && relay!==pump) alerts+=`<div class="alert">ℹ Relay state reported by Arduino: ${relay?"ON":"OFF"}.</div>`;
+  $("alerts").innerHTML=alerts;
+  $("moistureBar").style.width=Math.min(100,Math.max(0,values.moisture))+"%";
+  $("thresholds").innerHTML=`<div class="threshold"><span>Moisture</span><b>≥ ${c.mMin}%</b></div><div class="threshold"><span>pH</span><b>${c.ph[0]}–${c.ph[1]}</b></div><div class="threshold"><span>Temperature</span><b>${c.t[0]}–${c.t[1]}°C</b></div><div class="threshold"><span>Humidity</span><b>${c.h[0]}–${c.h[1]}%</b></div><div class="threshold"><span>Light</span><b>${c.l[0]}–${c.l[1]} lux</b></div>`;
+  updateAnalytics(c);
+}
+
+async function sendCropToArduino(cropName,silent=false){
+  if(!liveConnected){if(!silent)toast("Connect the sensor first to sync the crop");return false}
+  try{
+    if(connectionType==="wokwi"){
+      if(!ws || ws.readyState!==WebSocket.OPEN) throw new Error("Wokwi bridge is not connected");
+      ws.send(JSON.stringify({type:"crop",crop:cropName}));
+    } else if(connectionType==="serial"){
+      if(!serialPort?.writable) throw new Error("Serial port is not writable");
+      const writer=serialPort.writable.getWriter();
+      await writer.write(new TextEncoder().encode(cropName+"\n"));
+      writer.releaseLock();
+    } else throw new Error("No connection");
+    $("syncBadge").textContent="✓ "+cropName.toUpperCase()+" SENT";$("syncBadge").className="badge";
+    if(!silent)toast(cropName+" sent to Arduino");
+    setTimeout(()=>{if(liveConnected){$("syncBadge").textContent="↔ CROP SYNC READY";$("syncBadge").className="badge"}},1400);
+    return true;
+  }catch(err){if(!silent)toast("Could not send crop to sensor");return false}
+}
+
+function handleSensorPacket(packet){
+  const required=["soilMoisture","ph","temperature","humidity","light"];
+  if(!required.every(k=>Number.isFinite(Number(packet[k])))){
+    toast("Invalid sensor packet received");
+    return false;
+  }
+  if(packet.crop && CROPS[packet.crop]){crop=packet.crop;$("cropSelect").value=crop}
+  values={moisture:Number(packet.soilMoisture),ph:Number(packet.ph),temp:Number(packet.temperature),humidity:Number(packet.humidity),light:Number(packet.light)};
+  lastPacket=packet;
+  markUpdated();
+  render();
+  return true;
+}
+
+function handleIncomingLine(line){
+  line=line.trim();
+  if(!line) return;
+  try{
+    const packet=JSON.parse(line);
+    handleSensorPacket(packet);
+  }catch{ /* Human-readable Arduino lines are intentionally ignored. */ }
+}
+
+function handleBridgeMessage(event){
+  try{
+    const msg=JSON.parse(event.data);
+    if(msg.type==="sensor" && msg.data) handleSensorPacket(msg.data);
+    else if(msg.type==="sensor") handleSensorPacket(msg);
+  }catch{handleIncomingLine(String(event.data))}
+}
+
+function connectBridge(showToast=true){
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    try{
+      const socket=new WebSocket(BRIDGE_URL);
+      ws=socket;
+      const timeout=setTimeout(()=>{if(!settled){settled=true;try{socket.close()}catch{};reject(new Error("Bridge timeout"))}},1800);
+      socket.onopen=async()=>{clearTimeout(timeout);if(settled)return;settled=true;setModeSensor("wokwi");await sendCropToArduino(crop,true);if(showToast)toast("Wokwi sensor bridge connected");resolve(true)};
+      socket.onmessage=handleBridgeMessage;
+      socket.onerror=()=>{clearTimeout(timeout);if(!settled){settled=true;reject(new Error("Bridge unavailable"))}};
+      socket.onclose=()=>{if(connectionType==="wokwi"){setModeDemo("Wokwi bridge disconnected. Using simulated readings.");if(showToast)toast("Wokwi connection closed")}};
+    }catch(err){reject(err)}
+  });
+}
+
+async function connectSerial(){
+  if(!("serial" in navigator)){toast("Web Serial is not available in this browser.");return false}
+  try{
+    serialPort=await navigator.serial.requestPort();
+    await serialPort.open({baudRate:9600});
+    setModeSensor("serial");
+    await sendCropToArduino(crop,true);
+    readSerial();
+    toast("Arduino sensor connected");
+    return true;
+  }catch(err){
+    if(err?.name!=="NotFoundError") toast("Could not connect Arduino: "+(err.message||"unknown error"));
+    return false;
+  }
+}
+
+async function connectSensor(){
+  $("liveBtn").disabled=true;$("liveBtn").textContent="⏳ Connecting...";
+  try{await connectBridge(false);return}catch{}
+  $("liveBtn").disabled=false;
+  await connectSerial();
+}
+
+async function readSerial(){
+  if(!serialPort?.readable)return;
+  const decoder=new TextDecoderStream();
+  const pipePromise=serialPort.readable.pipeTo(decoder.writable).catch(()=>{});
+  serialReader=decoder.readable.getReader();
+  try{
+    while(liveConnected && connectionType==="serial"){
+      const {value,done}=await serialReader.read();
+      if(done)break;
+      if(value){serialBuffer+=value;const lines=serialBuffer.split(/\r?\n/);serialBuffer=lines.pop()||"";for(const line of lines)handleIncomingLine(line)}
+    }
+  }catch{if(liveConnected)toast("Arduino connection lost")}
+  finally{try{serialReader.releaseLock()}catch{}try{await pipePromise}catch{}}
+}
+
+async function disconnectSensor(){
+  const wasWokwi=connectionType==="wokwi";
+  liveConnected=false;
+  if(wasWokwi){try{ws?.close()}catch{};ws=null}
+  try{await serialReader?.cancel()}catch{}
+  try{await serialPort?.close()}catch{}
+  serialReader=null;serialPort=null;serialBuffer="";
+  $("syncBadge").textContent="↔ CROP SYNC READY";$("syncBadge").className="badge";
+  setModeDemo("No live sensor connection. The dashboard is using simulated readings.");
+  toast("Sensor disconnected — using simulated readings");
+}
+
+function changeCrop(){
+  crop=$("cropSelect").value;
+  $("cropArt").style.animation="none";void $("cropArt").offsetWidth;$("cropArt").style.animation="float 2.8s ease-in-out infinite";
+  if(!liveConnected){
+    const c=CROPS[crop];values.moisture=c.mMin;values.ph=+((c.ph[0]+c.ph[1])/2).toFixed(1);values.temp=Math.round((c.t[0]+c.t[1])/2);values.humidity=Math.round((c.h[0]+c.h[1])/2);values.light=Math.round((c.l[0]+c.l[1])/2);lastPacket={};render();toast("Switched to "+crop+" 🌱");
+  } else {
+    render();sendCropToArduino(crop);
+  }
+}
+
+function resetDashboard(){
+  crop="Tomato";$("cropSelect").value="Tomato";changeCrop();
+  if(!liveConnected){startDemo();toast("Dashboard reset")}else toast("Dashboard reset — sensor data still connected");
+}
+
+Object.keys(CROPS).forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=CROPS[n].emoji+" "+n;$("cropSelect").appendChild(o)});
+$("cropSelect").addEventListener("change",changeCrop);
+$("liveBtn").addEventListener("click",connectSensor);
+$("disconnectBtn").addEventListener("click",disconnectSensor);
+$("randomBtn").addEventListener("click",()=>{if(liveConnected)toast("Live sensor data is active");else{reading();toast("New demo reading generated")}});
+$("resetBtn").addEventListener("click",resetDashboard);
+$("themeBtn").addEventListener("click",()=>{document.body.classList.toggle("light");$("themeBtn").textContent=document.body.classList.contains("light")?"🌙 Dark":"☀️ Light";toast("Theme changed")});
+
+$("cropSelect").value="Tomato";
+render();
+startDemo();
+
+// Automatically try the Wokwi bridge. If Wokwi is not running, the dashboard simply stays in DEMO DATA.
+async function autoConnectBridge(){
+  if(liveConnected)return;
+  try{await connectBridge(false)}catch{
+    if(!liveConnected){
+      $("modeBadge").textContent="● DEMO DATA";$("modeBadge").className="badge";
+      $("serialHelp").textContent="Wokwi bridge not detected. Start the bridge and Wokwi, then click Connect Sensor, or keep using simulated readings.";
+    }
+  }
+}
+autoConnectBridge();
+bridgeRetryTimer=setInterval(autoConnectBridge,5000);
+
+</script>
+</body>
+</html>

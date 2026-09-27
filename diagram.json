@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "author": "Smart Crop Monitoring System",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 39, "left": 18.6, "attrs": {} },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "soilPot",
+      "top": -100,
+      "left": 360,
+      "attrs": { "label": "SOIL MOISTURE" }
+    },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": 100,
+      "left": 360,
+      "attrs": { "lux": "650" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "phPot",
+      "top": 300,
+      "left": 360,
+      "attrs": { "label": "SOIL pH" }
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -100,
+      "left": 650,
+      "attrs": { "temperature": "29", "humidity": "60" }
+    },
+    { "type": "wokwi-relay-module", "id": "relay1", "top": 300, "left": 650, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "redLed",
+      "top": -170,
+      "left": 900,
+      "attrs": { "color": "red", "label": "WARNING" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "redResistor",
+      "top": -100,
+      "left": 900,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "greenLed",
+      "top": 30,
+      "left": 900,
+      "attrs": { "color": "green", "label": "NORMAL" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "greenResistor",
+      "top": 100,
+      "left": 900,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "pumpLed",
+      "top": 250,
+      "left": 900,
+      "attrs": { "color": "blue", "label": "PUMP" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "pumpResistor",
+      "top": 320,
+      "left": 900,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer1",
+      "top": -250,
+      "left": 650,
+      "attrs": { "volume": "0.5" }
+    }
+  ],
+  "connections": [
+    [ "soilPot:VCC", "uno:5V", "red", [ "v0" ] ],
+    [ "soilPot:GND", "uno:GND.1", "black", [ "v0" ] ],
+    [ "soilPot:SIG", "uno:A0", "orange", [ "v0" ] ],
+    [ "ldr1:VCC", "uno:5V", "red", [ "v0" ] ],
+    [ "ldr1:GND", "uno:GND.1", "black", [ "v0" ] ],
+    [ "ldr1:AO", "uno:A1", "yellow", [ "v0" ] ],
+    [ "phPot:VCC", "uno:5V", "red", [ "v0" ] ],
+    [ "phPot:GND", "uno:GND.1", "black", [ "v0" ] ],
+    [ "phPot:SIG", "uno:A2", "purple", [ "v0" ] ],
+    [ "dht1:VCC", "uno:5V", "red", [ "v0" ] ],
+    [ "dht1:GND", "uno:GND.1", "black", [ "v0" ] ],
+    [ "dht1:SDA", "uno:2", "blue", [ "v0" ] ],
+    [ "relay1:VCC", "uno:5V", "red", [ "v0" ] ],
+    [ "relay1:GND", "uno:GND.1", "black", [ "v0" ] ],
+    [ "relay1:IN", "uno:7", "orange", [ "v0" ] ],
+    [ "redLed:A", "redResistor:1", "red", [ "v0" ] ],
+    [ "redResistor:2", "uno:8", "red", [ "v0" ] ],
+    [ "redLed:C", "uno:GND.1", "black", [ "v0" ] ],
+    [ "greenLed:A", "greenResistor:1", "green", [ "v0" ] ],
+    [ "greenResistor:2", "uno:9", "green", [ "v0" ] ],
+    [ "greenLed:C", "uno:GND.1", "black", [ "v0" ] ],
+    [ "pumpLed:A", "pumpResistor:1", "blue", [ "v0" ] ],
+    [ "pumpResistor:2", "uno:6", "blue", [ "v0" ] ],
+    [ "pumpLed:C", "uno:GND.1", "black", [ "v0" ] ],
+    [ "buzzer1:1", "uno:10", "red", [ "v0" ] ],
+    [ "buzzer1:2", "uno:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}

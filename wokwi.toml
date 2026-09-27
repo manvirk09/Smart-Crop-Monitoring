@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+firmware = 'build/Smart-Crop-Monitoring-Final.ino.hex'
+elf = 'build/Smart-Crop-Monitoring-Final.ino.elf'
+rfc2217ServerPort = 4000
